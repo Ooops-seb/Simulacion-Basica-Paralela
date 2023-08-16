@@ -1,5 +1,6 @@
 import flet as ft
 import time
+import threading
 
 process_items = []
 count = 0
@@ -23,42 +24,59 @@ def main(page: ft.Page):
     page.auto_scroll = True
     page.window_center()
     
+    class ThreadProcess(threading.Thread):
+
+        def __init__(self, process):
+            threading.Thread.__init__(self)
+            self.process = process
+
+        def run(self):
+            self.process.run()
+    
     class ProcessView():
         
-        def run_process(self):
-            for i in range(self.numero_datos):
-                self.state.value = "En ejecucion" 
-                text = ft.Text(value=f"{i}: {time.localtime}")  
-                self.process_texts.append(text)
-                time.sleep(self.tiempo/self.numero_datos)
-                self.proccess_item.update()
-        
-        def play_event(self, e):
+        def run(self, e):
             print("Play Clicked")
+            self.lock.acquire()
+            self.running = True
+            self.lock.release()
+            
             for i in range(self.numero_datos):
                 self.state.value = "En ejecucion" 
-                text = ft.Text(value=f"{i}: {time.localtime}")  
+                text = ft.Text(value=f"{i+1}: {time.localtime}")  
                 self.process_texts.append(text)
                 time.sleep(self.tiempo/self.numero_datos)
                 self.proccess_item.update()
-            self.running = True
-            self.state.value = "Completado" 
+            
+            self.sem.acquire() 
+            self.state.value = "Completado"
             self.page.update()
+            self.sem.release()
 
         def pause_event(self, e):
             print("Pause Clicked")
+            self.lock.acquire()
             self.running = False
-            self.state.value = "Pausado"
+            for text in self.process_texts:
+                text.value = "Paused"
+            self.lock.release()
             self.proccess_item.update()
 
         def stop_event(self, e):
             print("Stop Clicked")
             self.running = False
-            self.counter = 0
             self.state.value = "Detenido"
+            self.process_texts = []
+            self.counter = 0
             self.proccess_item.update()
+            self.page.update()
         
         def __init__(self, page: ft.Page,count: int, tiempo: int, velocidad: float, numero_datos: int, color: bool):
+            
+            self.lock = threading.Lock()
+            self.sem = threading.Semaphore() 
+            self.thread = ThreadProcess(self)
+            self.thread.start()
             
             self.page = page
             self.count = count
@@ -75,7 +93,7 @@ def main(page: ft.Page):
                 icon_color="blue",
                 icon_size=25,
                 tooltip="Iniciar",
-                on_click=self.play_event,
+                on_click=self.run,
             )
             self.pause_button = ft.IconButton(
                 icon=ft.icons.PAUSE,

@@ -135,7 +135,7 @@ def main(page: ft.Page):
                             border_radius=ft.border_radius.all(10),
                         ),
                         self.process_container,
-                        ft.Text(value=f"Velocidad: x{self.velocidad}"),
+                        ft.Text(value=f"Velocidad: {self.velocidad} [d/s]"),
                         ft.Container(
                             ft.Row(
                                 [

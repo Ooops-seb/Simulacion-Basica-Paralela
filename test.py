@@ -25,6 +25,14 @@ def main(page: ft.Page):
     
     class ProcessView():
         
+        def run_process(self):
+            for i in range(self.numero_datos):
+                self.state.value = "En ejecucion" 
+                text = ft.Text(value=f"{i}: {time.localtime}")  
+                self.process_texts.append(text)
+                time.sleep(self.tiempo/self.numero_datos)
+                self.proccess_item.update()
+        
         def play_event(self, e):
             print("Play Clicked")
             for i in range(self.numero_datos):
